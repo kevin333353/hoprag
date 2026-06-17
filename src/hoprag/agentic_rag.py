@@ -71,14 +71,14 @@ class AgenticRAG:
                 done = (hop + 1) >= cfg.fixed_hops
             if done:
                 break
-            current_query = step["next_query"] or current_query
+            current_query = step.get("next_query") or current_query
 
         # (4) synthesize with citations
         synth = self.claude.complete_json(
             prompts.synthesize_prompt(question, gathered), prompts.SYNTH_SCHEMA)
         res.n_claude_calls += 1
         res.answer = synth["answer"]
-        res.cited_chunk_ids = synth["cited_chunk_ids"]
+        res.cited_chunk_ids = synth.get("cited_chunk_ids") or []
 
         # (5) verify citations
         if cfg.verify_citations:
@@ -87,7 +87,7 @@ class AgenticRAG:
                 prompts.VERIFY_SCHEMA)
             res.n_claude_calls += 1
             if not ver["supported"]:
-                res.answer = ver["revised_answer"]
-                res.cited_chunk_ids = ver["cited_chunk_ids"]
+                res.answer = ver.get("revised_answer") or res.answer
+                res.cited_chunk_ids = ver.get("cited_chunk_ids") or res.cited_chunk_ids
 
         return res

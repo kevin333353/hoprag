@@ -90,3 +90,19 @@ def test_config_rejects_fixed_hops_above_max_hops():
     import pytest
     with pytest.raises(ValueError):
         AgenticConfig(fixed_hops=10, max_hops=5)
+
+
+def test_loop_tolerates_null_next_query_and_missing_citations():
+    # real models return next_query: null when sufficient, and may omit cited ids
+    responses = [
+        {"first_query": "q", "subquestions": []},
+        {"reasoning": "enough", "sufficient": True, "next_query": None},
+        {"answer": "Burbank"},   # no cited_chunk_ids key
+        {"supported": True},     # no revised_answer / cited_chunk_ids keys
+    ]
+    from conftest import FakeRetriever, FakeClaude
+    retr = FakeRetriever({"q": C2})
+    rag = AgenticRAG(retr, FakeClaude(json_responses=responses))
+    res = rag.answer("q")
+    assert res.answer == "Burbank"
+    assert res.cited_chunk_ids == []

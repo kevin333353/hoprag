@@ -11,33 +11,37 @@ DECOMPOSE_SCHEMA = {
     "required": ["first_query"],
 }
 
+# Schemas are intentionally lenient: real models legitimately return null / omit
+# fields (e.g. next_query when the evidence is already sufficient). Only the fields
+# the loop strictly needs are required; the rest may be string-or-null. Callers
+# coerce null -> sensible defaults.
 HOP_SCHEMA = {
     "type": "object",
     "properties": {
         "reasoning": {"type": "string"},
         "sufficient": {"type": "boolean"},
-        "next_query": {"type": "string"},
+        "next_query": {"type": ["string", "null"]},
     },
-    "required": ["reasoning", "sufficient", "next_query"],
+    "required": ["reasoning", "sufficient"],
 }
 
 SYNTH_SCHEMA = {
     "type": "object",
     "properties": {
         "answer": {"type": "string"},
-        "cited_chunk_ids": {"type": "array", "items": {"type": "string"}},
+        "cited_chunk_ids": {"type": ["array", "null"], "items": {"type": "string"}},
     },
-    "required": ["answer", "cited_chunk_ids"],
+    "required": ["answer"],
 }
 
 VERIFY_SCHEMA = {
     "type": "object",
     "properties": {
         "supported": {"type": "boolean"},
-        "revised_answer": {"type": "string"},
-        "cited_chunk_ids": {"type": "array", "items": {"type": "string"}},
+        "revised_answer": {"type": ["string", "null"]},
+        "cited_chunk_ids": {"type": ["array", "null"], "items": {"type": "string"}},
     },
-    "required": ["supported", "revised_answer", "cited_chunk_ids"],
+    "required": ["supported"],
 }
 
 

@@ -10,9 +10,9 @@ def build_index(chunks, embed_fn, db_path: str, table_name: str = "chunks"):
         for c, v in zip(chunks, vectors)
     ]
     db = lancedb.connect(db_path)
-    if table_name in db.list_tables():
-        db.drop_table(table_name)
-    return db.create_table(table_name, data=rows)
+    # mode="overwrite" replaces any existing table — robust to re-runs over a
+    # persistent db_path (the prior list_tables() existence check did not fire).
+    return db.create_table(table_name, data=rows, mode="overwrite")
 
 
 def make_bge_embed_fn(model_name: str = "BAAI/bge-small-en-v1.5"):

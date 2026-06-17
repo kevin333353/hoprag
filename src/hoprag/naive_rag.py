@@ -16,7 +16,7 @@ class NaiveRAG:
         return Result(
             question=question,
             answer=synth["answer"],
-            cited_chunk_ids=synth["cited_chunk_ids"],
+            cited_chunk_ids=synth.get("cited_chunk_ids") or [],
             trace=[HopStep(
                 query=question,
                 retrieved_ids=[c.id for c in chunks],
