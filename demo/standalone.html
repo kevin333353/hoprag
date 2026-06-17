@@ -146,6 +146,317 @@
     border-top:1px solid var(--line);padding-top:20px;line-height:1.8}
   footer a{color:var(--muted)}
 </style>
+<script>window.__EXAMPLES__ = {
+  "cached": true,
+  "model": "haiku",
+  "examples": [
+    {
+      "question": "In which city was the director of Ed Wood born?",
+      "naive": {
+        "answer": "Burbank, California",
+        "cited_chunk_ids": [
+          "d0",
+          "d1"
+        ],
+        "n_claude_calls": 1,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "In which city was the director of Ed Wood born?",
+            "retrieved_ids": [
+              "d0",
+              "d1",
+              "d6"
+            ],
+            "reasoning": "naive single-shot retrieval",
+            "sufficient": true
+          }
+        ]
+      },
+      "agentic": {
+        "answer": "Burbank",
+        "cited_chunk_ids": [
+          "d0",
+          "d1"
+        ],
+        "n_claude_calls": 4,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "Ed Wood director",
+            "retrieved_ids": [
+              "d0",
+              "d1",
+              "d6"
+            ],
+            "reasoning": "Evidence d0 identifies Tim Burton as the director of Ed Wood. Evidence d1 states Tim Burton was born in Burbank, California. This directly answers the question with no missing facts.",
+            "sufficient": true
+          }
+        ]
+      },
+      "chunks": {
+        "d1": {
+          "title": "Tim Burton",
+          "text": "Tim Burton is an American filmmaker born on August 25, 1958, in Burbank, California. He is known for gothic fantasy films such as Edward Scissorhands."
+        },
+        "d6": {
+          "title": "Christopher Nolan",
+          "text": "Christopher Nolan is a British-American film director born on July 30, 1970, in London, England. His films include Inception, Interstellar and The Dark Knight."
+        },
+        "d0": {
+          "title": "Ed Wood (film)",
+          "text": "Ed Wood is a 1994 American biographical film directed by Tim Burton. It stars Johnny Depp as the cult filmmaker Edward D. Wood Jr."
+        }
+      },
+      "answer": "Burbank"
+    },
+    {
+      "question": "Where was the director of Inception born?",
+      "naive": {
+        "answer": "London, England",
+        "cited_chunk_ids": [
+          "d5",
+          "d6"
+        ],
+        "n_claude_calls": 1,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "Where was the director of Inception born?",
+            "retrieved_ids": [
+              "d6",
+              "d5",
+              "d1"
+            ],
+            "reasoning": "naive single-shot retrieval",
+            "sufficient": true
+          }
+        ]
+      },
+      "agentic": {
+        "answer": "London, England",
+        "cited_chunk_ids": [
+          "d5",
+          "d6"
+        ],
+        "n_claude_calls": 4,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "Inception director",
+            "retrieved_ids": [
+              "d5",
+              "d6",
+              "d1"
+            ],
+            "reasoning": "Evidence [d5] identifies Christopher Nolan as the director of Inception. Evidence [d6] provides his birthplace: London, England. This directly answers the original question.",
+            "sufficient": true
+          }
+        ]
+      },
+      "chunks": {
+        "d6": {
+          "title": "Christopher Nolan",
+          "text": "Christopher Nolan is a British-American film director born on July 30, 1970, in London, England. His films include Inception, Interstellar and The Dark Knight."
+        },
+        "d5": {
+          "title": "Inception (film)",
+          "text": "Inception is a 2010 science fiction action film written and directed by Christopher Nolan, following a thief who steals secrets through dream-sharing."
+        },
+        "d1": {
+          "title": "Tim Burton",
+          "text": "Tim Burton is an American filmmaker born on August 25, 1958, in Burbank, California. He is known for gothic fantasy films such as Edward Scissorhands."
+        }
+      },
+      "answer": "London"
+    },
+    {
+      "question": "In what city was the director of Pulp Fiction born?",
+      "naive": {
+        "answer": "Knoxville",
+        "cited_chunk_ids": [
+          "d9",
+          "d10"
+        ],
+        "n_claude_calls": 1,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "In what city was the director of Pulp Fiction born?",
+            "retrieved_ids": [
+              "d9",
+              "d6",
+              "d10"
+            ],
+            "reasoning": "naive single-shot retrieval",
+            "sufficient": true
+          }
+        ]
+      },
+      "agentic": {
+        "answer": "Knoxville, Tennessee",
+        "cited_chunk_ids": [
+          "d9",
+          "d10"
+        ],
+        "n_claude_calls": 4,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "director of Pulp Fiction",
+            "retrieved_ids": [
+              "d9",
+              "d6",
+              "d10"
+            ],
+            "reasoning": "Evidence [d9] identifies Quentin Tarantino as the director of Pulp Fiction. Evidence [d10] provides his birthplace: Knoxville, Tennessee. The city where the director was born is Knoxville.",
+            "sufficient": true
+          }
+        ]
+      },
+      "chunks": {
+        "d10": {
+          "title": "Quentin Tarantino",
+          "text": "Quentin Tarantino is an American filmmaker born on March 27, 1963, in Knoxville, Tennessee. He is known for stylized violence and sharp dialogue."
+        },
+        "d6": {
+          "title": "Christopher Nolan",
+          "text": "Christopher Nolan is a British-American film director born on July 30, 1970, in London, England. His films include Inception, Interstellar and The Dark Knight."
+        },
+        "d9": {
+          "title": "Pulp Fiction",
+          "text": "Pulp Fiction is a 1994 American crime film directed by Quentin Tarantino, known for its nonlinear storyline and eclectic dialogue."
+        }
+      },
+      "answer": "Knoxville"
+    },
+    {
+      "question": "Where was the lead actor of Ed Wood born?",
+      "naive": {
+        "answer": "Information not provided in evidence. While [d0] identifies Johnny Depp as the lead actor, no chunk contains his birthplace.",
+        "cited_chunk_ids": [
+          "d0"
+        ],
+        "n_claude_calls": 1,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "Where was the lead actor of Ed Wood born?",
+            "retrieved_ids": [
+              "d0",
+              "d1",
+              "d12"
+            ],
+            "reasoning": "naive single-shot retrieval",
+            "sufficient": true
+          }
+        ]
+      },
+      "agentic": {
+        "answer": "Owensboro, Kentucky",
+        "cited_chunk_ids": [
+          "d0",
+          "d3"
+        ],
+        "n_claude_calls": 4,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "Ed Wood film lead actor",
+            "retrieved_ids": [
+              "d0",
+              "d1",
+              "d3"
+            ],
+            "reasoning": "Evidence d0 identifies Johnny Depp as the lead actor of Ed Wood (1994). Evidence d3 provides Johnny Depp's birthplace as Owensboro, Kentucky. The question is fully answered.",
+            "sufficient": true
+          }
+        ]
+      },
+      "chunks": {
+        "d1": {
+          "title": "Tim Burton",
+          "text": "Tim Burton is an American filmmaker born on August 25, 1958, in Burbank, California. He is known for gothic fantasy films such as Edward Scissorhands."
+        },
+        "d12": {
+          "title": "Christian Bale",
+          "text": "Christian Bale is an English actor born on January 30, 1974, in Haverfordwest, Wales. He played Batman in Christopher Nolan's Dark Knight trilogy."
+        },
+        "d3": {
+          "title": "Johnny Depp",
+          "text": "Johnny Depp is an American actor born on June 9, 1963, in Owensboro, Kentucky. He has frequently collaborated with the director Tim Burton."
+        },
+        "d0": {
+          "title": "Ed Wood (film)",
+          "text": "Ed Wood is a 1994 American biographical film directed by Tim Burton. It stars Johnny Depp as the cult filmmaker Edward D. Wood Jr."
+        }
+      },
+      "answer": "Owensboro"
+    },
+    {
+      "question": "In which town was the actor who played Batman in The Dark Knight born?",
+      "naive": {
+        "answer": "Haverfordwest",
+        "cited_chunk_ids": [
+          "d12"
+        ],
+        "n_claude_calls": 1,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "In which town was the actor who played Batman in The Dark Knight born?",
+            "retrieved_ids": [
+              "d12",
+              "d6",
+              "d3"
+            ],
+            "reasoning": "naive single-shot retrieval",
+            "sufficient": true
+          }
+        ]
+      },
+      "agentic": {
+        "answer": "Haverfordwest",
+        "cited_chunk_ids": [
+          "d12"
+        ],
+        "n_claude_calls": 4,
+        "n_retrievals": 1,
+        "trace": [
+          {
+            "query": "who played Batman in The Dark Knight",
+            "retrieved_ids": [
+              "d12",
+              "d8",
+              "d3"
+            ],
+            "reasoning": "The evidence identifies Christian Bale as the actor who played Batman in The Dark Knight (confirmed in documents d12 and d8), and document d12 explicitly states he was born in Haverfordwest, Wales. This directly answers the original question with a specific town/location.",
+            "sufficient": true
+          }
+        ]
+      },
+      "chunks": {
+        "d6": {
+          "title": "Christopher Nolan",
+          "text": "Christopher Nolan is a British-American film director born on July 30, 1970, in London, England. His films include Inception, Interstellar and The Dark Knight."
+        },
+        "d12": {
+          "title": "Christian Bale",
+          "text": "Christian Bale is an English actor born on January 30, 1974, in Haverfordwest, Wales. He played Batman in Christopher Nolan's Dark Knight trilogy."
+        },
+        "d3": {
+          "title": "Johnny Depp",
+          "text": "Johnny Depp is an American actor born on June 9, 1963, in Owensboro, Kentucky. He has frequently collaborated with the director Tim Burton."
+        },
+        "d8": {
+          "title": "The Dark Knight (film)",
+          "text": "The Dark Knight is a 2008 superhero film directed by Christopher Nolan. It is the second installment of his Batman trilogy and stars Christian Bale."
+        }
+      },
+      "answer": "Haverfordwest"
+    }
+  ]
+};</script>
 </head>
 <body>
 <div class="wrap">
