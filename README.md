@@ -2,6 +2,21 @@
 
 An agentic retrieval system that beats naive RAG on multi-hop questions by **orchestrating** retrieval instead of doing it in one shot. The orchestration loop is the point: it is a hand-written, inspectable, *ablatable* strategy — not a generic agent framework — and Claude (via the `claude` CLI) is called as the per-step reasoning model. A fixed local dense retriever is shared across every variant, so any measured accuracy lift is attributable to the loop, not a fancier retriever.
 
+## 中文 RAG 工具 — query your own PDFs
+
+A Traditional-Chinese tool that runs **naive vs agentic side-by-side over your own PDFs**, scores each answer with the reference-free **RAG Triad** (context relevance / groundedness / answer relevance — the TruLens/RAGAS standard, LLM-as-judge, no answer key needed), and shows per-side timing + cited sources (file + page).
+
+```bash
+python scripts/rag_tool.py --docs AI-test          # → http://127.0.0.1:5000
+# stronger multilingual embeddings (but ~2GB, needs RAM):  --embed-model BAAI/bge-m3
+```
+
+- **PDF ingest** (`hoprag.ingest`, PyMuPDF) → overlapping chunks tagged with file + page.
+- **Embeddings**: default `BAAI/bge-small-zh-v1.5` (light, Chinese); `bge-m3` opt-in. Downloads use the OS trust store (`truststore`) so they work behind corporate TLS proxies.
+- **Answers in Traditional Chinese** via injected `prompts_zh`; the same agentic loop, in Chinese.
+- **Validated** on a 7-PDF iPAS corpus — e.g. 「什麼是生成式 AI？它和傳統辨識式 AI 有何不同?」 → naive **89.0** vs agentic **96.0** (grounded, cited 科目1/科目2 with page numbers).
+- **Cost/latency**: ~7–9 `claude` calls per question (~1–2 min; per-process CLI startup dominates). Default model `haiku`. Your PDFs stay local — `AI-test/` is gitignored.
+
 ## The idea
 
 Naive RAG retrieves once on the raw question and answers. That fails on multi-hop questions where the bridge fact is only findable *after* you've answered the first hop (e.g. "Where was the director of *Ed Wood* born?" — you must first learn the director is Tim Burton, then retrieve Burton's birthplace). HopRAG runs a loop instead:
