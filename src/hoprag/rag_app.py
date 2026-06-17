@@ -19,6 +19,7 @@ from hoprag.rag_eval import score_triad
 
 _FRONTEND_DIR = Path(__file__).resolve().parents[2] / "demo"
 TOP_K = 4
+# cap the judge prompt size: at most MAX_JUDGE_CONTEXTS retrieved chunks, each truncated to _CTX_CHARS chars
 MAX_JUDGE_CONTEXTS = 6
 _CTX_CHARS = 320
 
@@ -49,7 +50,8 @@ def _contexts(res, id2chunk: dict) -> list[str]:
     for s in res.trace:
         for cid in s.retrieved_ids:
             if cid not in seen:
-                seen.add(cid); ids.append(cid)
+                seen.add(cid)
+                ids.append(cid)
     out = [id2chunk[c].text[:_CTX_CHARS] for c in ids if c in id2chunk]
     return out[:MAX_JUDGE_CONTEXTS]
 
@@ -74,9 +76,9 @@ def answer_and_score(retriever, qa_claude, judge_claude, question, id2chunk) -> 
         sa = ex.submit(score_triad, judge_claude, question, agentic_res.answer, _contexts(agentic_res, id2chunk))
         naive_scores, agentic_scores = sn.result(), sa.result()
 
-    np_, ap_ = _payload(naive_res, id2chunk, naive_t), _payload(agentic_res, id2chunk, agentic_t)
-    np_["scores"], ap_["scores"] = naive_scores, agentic_scores
-    return {"naive": np_, "agentic": ap_}
+    naive_payload, agentic_payload = _payload(naive_res, id2chunk, naive_t), _payload(agentic_res, id2chunk, agentic_t)
+    naive_payload["scores"], agentic_payload["scores"] = naive_scores, agentic_scores
+    return {"naive": naive_payload, "agentic": agentic_payload}
 
 
 def create_app(retriever, claude_factory, id2chunk, sources=None):

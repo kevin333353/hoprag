@@ -70,3 +70,17 @@ def test_info_endpoint():
     r = _app().test_client().get("/api/info")
     j = r.get_json()
     assert j["sources"] == ["doc"] and j["n_chunks"] == 2
+
+
+def test_ask_returns_502_on_pipeline_error():
+    class BoomClaude:
+        def complete_json(self, prompt, schema):
+            raise RuntimeError("boom")
+        def complete(self, prompt):
+            return ""
+    id2chunk = _id2chunk()
+    app = create_app(FakeRetriever(id2chunk.values()), lambda m: BoomClaude(), id2chunk, sources=["doc"])
+    r = app.test_client().post("/api/ask", json={"question": "什麼是人工智慧?"})
+    assert r.status_code == 502
+    body = r.get_json()
+    assert "error" in body and "boom" in body["error"]  # friendly message, not a stack
