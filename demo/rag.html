@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HopRAG — 中文知識問答比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ── CSS Variables — same palette as index.html ── */
+:root {
+  --bg:          #0a0c0e;
+  --panel:       #12161a;
+  --panel2:      #0e1215;
+  --panel3:      #0b0e11;
+  --ink:         #ece9e1;
+  --muted:       #8b9197;
+  --faint:       #5a6066;
+  --line:        #222a30;
+  --line2:       #2d373e;
+
+  --amber:       #f4b740;
+  --amber-soft:  #ffd97a;
+  --amber-dim:   #c49030;
+  --amber-glow:  rgba(244,183,64,.16);
+  --amber-glow2: rgba(244,183,64,.06);
+
+  --cool:        #6f93b8;
+  --cool-soft:   #9bb6d4;
+  --cool-dim:    #4a6a8a;
+  --cool-glow:   rgba(111,147,184,.10);
+
+  --good:  #76d89a;
+  --warn:  #e8b56b;
+  --bad:   #e8736b;
+
+  --font-display: "Noto Serif TC", Georgia, "Times New Roman", serif;
+  --font-body:    "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  --radius: 3px;
+  --radius-lg: 5px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* Blueprint dot-grid + radial glows — same pattern as v1 */
+  background-image:
+    radial-gradient(900px 480px at 80% -6%,  var(--amber-glow),  transparent 60%),
+    radial-gradient(700px 420px at 5%  6%,   var(--cool-glow),   transparent 60%),
+    radial-gradient(circle, var(--line) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px;
+  background-position: 0 0, 0 0, -1px -1px;
+}
+
+/* Grain overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .032;
+  z-index: 99;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 44px 28px 100px;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  border-bottom: 1px solid var(--line2);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.brand h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 54px);
+  letter-spacing: -.025em;
+  margin: 0;
+  line-height: 1;
+}
+.brand h1 .rag { color: var(--amber); font-style: italic; }
+.brand p {
+  margin: .55em 0 0;
+  color: var(--muted);
+  max-width: 52ch;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* Corpus pill */
+.corpus-info {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: right;
+  line-height: 2;
+}
+.corpus-info .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--good);
+  margin-right: 6px;
+  box-shadow: 0 0 8px var(--good);
+  vertical-align: middle;
+}
+.corpus-info b { color: var(--amber-soft); font-weight: 500; }
+.source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+  margin-top: 6px;
+  max-width: 360px;
+}
+.source-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ── Intro banner ── */
+.intro-banner {
+  background: linear-gradient(90deg, rgba(111,147,184,.08), rgba(244,183,64,.06));
+  border: 1px solid var(--line2);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius);
+  padding: 13px 18px;
+  margin-bottom: 28px;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.intro-banner strong { color: var(--amber-soft); font-weight: 600; }
+.intro-banner .cool-word { color: var(--cool-soft); }
+
+/* ── Ask bar ── */
+.ask-wrap { margin-bottom: 10px; }
+.ask {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+.field {
+  flex: 1 1 420px;
+  display: flex;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  padding: 0 8px 0 16px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.field:focus-within {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px var(--amber), 0 0 28px var(--amber-glow);
+}
+.field .prompt-sym {
+  font-family: var(--font-mono);
+  color: var(--amber);
+  font-size: 14px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.field textarea {
+  flex: 1;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 14px 0;
+  resize: none;
+  min-height: 52px;
+  line-height: 1.5;
+}
+.field textarea::placeholder { color: var(--faint); }
+
+select, .ask button {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+select {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--line2);
+  padding: 0 14px;
+  min-width: 140px;
+  outline: none;
+}
+select:focus { border-color: var(--cool); }
+
+.ask button {
+  background: var(--amber);
+  color: #1a1206;
+  border: 0;
+  font-weight: 700;
+  padding: 0 30px;
+  letter-spacing: .04em;
+  transition: filter .15s, box-shadow .2s, transform .1s;
+  white-space: nowrap;
+}
+.ask button:hover { filter: brightness(1.1); box-shadow: 0 0 26px var(--amber-glow); }
+.ask button:active { transform: translateY(1px); }
+.ask button:disabled { opacity: .45; cursor: wait; }
+
+.hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin: 8px 0 32px;
+}
+
+/* ── Loading ── */
+#status {
+  display: none;
+  border: 1px dashed var(--line2);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 30px;
+  background: var(--panel3);
+}
+#status.on { display: block; }
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--line2);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status-step {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--amber-soft);
+  font-weight: 500;
+}
+.status-elapsed {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--faint);
+  margin-left: auto;
+}
+
+.status-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-bottom: 12px;
+}
+
+.bar {
+  height: 2px;
+  background: var(--line2);
+  overflow: hidden;
+  position: relative;
+  border-radius: 1px;
+}
+.bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--amber-soft));
+  animation: slide 1.4s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--amber);
+}
+@keyframes slide { 0% { left: -40%; } 100% { left: 106%; } }
+
+/* ── Results grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+.col {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px 24px 28px;
+  position: relative;
+  opacity: 0;
+}
+.col.show { animation: rise .5s cubic-bezier(.22,.7,.2,1) forwards; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.col.naive   { border-top: 2px solid var(--cool); }
+.col.agentic { border-top: 2px solid var(--amber); }
+
+/* ── Col header tag ── */
+.col-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.naive   .col-tag { color: var(--cool-soft); }
+.agentic .col-tag { color: var(--amber-soft); }
+.col-tag .stats {
+  color: var(--faint);
+  letter-spacing: .04em;
+  text-transform: none;
+  font-size: 10.5px;
+}
+
+/* ── Answer ── */
+.answer {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.75;
+  font-weight: 400;
+  margin: 0 0 20px;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+.naive   .answer { border-left: 2px solid rgba(111,147,184,.35); padding-left: 14px; }
+.agentic .answer { border-left: 2px solid rgba(244,183,64,.35);  padding-left: 14px; }
+
+/* ── Score bars — the visual centerpiece ── */
+.scores-section {
+  background: rgba(255,255,255,.018);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.scores-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scores-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 38px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.score-row:last-of-type { margin-bottom: 0; }
+.score-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.score-track {
+  height: 7px;
+  background: var(--line2);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.score-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0;
+  transition: width 1s cubic-bezier(.22,.7,.2,1);
+  position: relative;
+}
+.score-fill::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 24px;
+  background: inherit;
+  filter: blur(5px) brightness(1.5);
+  opacity: .7;
+}
+.naive .score-fill   { background: linear-gradient(90deg, var(--cool-dim), var(--cool-soft)); }
+.agentic .score-fill { background: linear-gradient(90deg, var(--amber-dim), var(--amber-soft)); }
+
+.score-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-align: right;
+  font-weight: 500;
+}
+
+.overall-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.overall-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.overall-badge {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.naive   .overall-badge { color: var(--cool-soft); }
+.agentic .overall-badge { color: var(--amber-soft); }
+
+.rationale {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--faint);
+  margin-top: 10px;
+  line-height: 1.6;
+  font-style: italic;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+/* ── Sub-section heading ── */
+.sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 22px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sub::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* ── Cited chips ── */
+.cited-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cited-chip {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--amber-soft);
+  background: var(--amber-glow2);
+  border: 1px solid rgba(244,183,64,.28);
+  border-radius: var(--radius);
+  padding: 4px 9px;
+  cursor: default;
+  transition: all .15s;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.naive .cited-chip {
+  color: var(--cool-soft);
+  background: rgba(111,147,184,.06);
+  border-color: rgba(111,147,184,.28);
+}
+.cited-chip:hover {
+  background: rgba(244,183,64,.12);
+  border-color: var(--amber);
+}
+.naive .cited-chip:hover {
+  background: rgba(111,147,184,.14);
+  border-color: var(--cool);
+}
+
+/* ── Hop rail (agentic only) ── */
+.rail {
+  position: relative;
+  margin: 4px 0 8px;
+  padding-left: 32px;
+}
+.rail::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 8px; bottom: 18px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--amber), rgba(244,183,64,.08));
+}
+
+.hop {
+  position: relative;
+  margin-bottom: 22px;
+  opacity: 0;
+  transform: translateX(10px);
+}
+.hop.in { animation: hopin .45s cubic-bezier(.22,.7,.2,1) forwards; }
+@keyframes hopin { to { opacity: 1; transform: none; } }
+
+.hop-node {
+  position: absolute;
+  left: -32px;
+  top: 2px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--amber);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 14px var(--amber-glow);
+}
+
+.hop-query {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  margin-bottom: 7px;
+  line-height: 1.4;
+}
+.hop-query em { color: var(--faint); font-style: normal; margin-right: 6px; }
+
+.hop-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+.hop-src {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  padding: 2px 7px;
+}
+
+.hop-reasoning {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 9px;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+  display: inline-block;
+}
+.badge.suff { color: var(--good);      border-color: rgba(118,216,154,.4); }
+.badge.cont { color: var(--cool-soft); border-color: var(--line2); }
+
+/* ── Error ── */
+.err {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--bad);
+  border: 1px solid rgba(232,115,107,.35);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: rgba(232,115,107,.05);
+  line-height: 1.6;
+}
+
+/* ── Footer ── */
+footer {
+  margin-top: 70px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  line-height: 1.9;
+}
+footer a { color: var(--muted); }
+
+/* ── Utility ── */
+.hidden { display: none !important; }
+
+/* Score color by value */
+.score-fill[data-val] { } /* filled by JS */
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <h1>Hop<span class="rag">RAG</span> <span style="font-weight:300;font-size:.55em;color:var(--muted)">繁中問答</span></h1>
+      <p>以同一份語料庫比較<strong style="color:var(--cool-soft)">一般 RAG（單次檢索）</strong>與
+        <strong style="color:var(--amber-soft)">Agentic RAG（多跳推理）</strong>的答案品質，
+        並以 RAG Triad 三項指標自動評分。</p>
+    </div>
+    <div class="corpus-info">
+      <div><span class="dot"></span>語料庫: <b id="corpus-label">載入中…</b></div>
+      <div id="source-list-wrap" style="display:none">
+        <div class="source-list" id="source-list"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Intro banner -->
+  <div class="intro-banner">
+    <strong>閱讀重點：</strong>
+    右側 Agentic RAG 會將問題拆解成多個子問題，逐步檢索並推理，直到資訊足夠才作答。
+    <span class="cool-word">左側</span>則一次性檢索、一次性回答。
+    關鍵差異在於品質分數中的
+    <strong>忠實度（Groundedness）</strong>——Agentic 側通常有更高的忠實度，
+    因為每一跳都確認了引用依據。
+  </div>
+
+  <!-- Ask bar -->
+  <div class="ask-wrap">
+    <div class="ask">
+      <label class="field">
+        <span class="prompt-sym">&gt;_</span>
+        <textarea id="q" rows="1" placeholder="輸入你的問題，例如：什麼是生成式 AI 的應用規劃流程？" autocomplete="off"></textarea>
+      </label>
+      <select id="model" title="模型選擇">
+        <option value="haiku">haiku · 快速/便宜</option>
+        <option value="sonnet">sonnet · 均衡</option>
+        <option value="opus">opus · 最佳品質</option>
+      </select>
+      <button id="ask-btn">送出</button>
+    </div>
+  </div>
+  <p class="hint">每次提問都會呼叫真實 Claude API（約 1–2 分鐘）。Claude 呼叫費用依模型計費。</p>
+
+  <!-- Loading state -->
+  <div id="status">
+    <div class="status-header">
+      <div class="spinner"></div>
+      <div class="status-step" id="status-step">處理中…</div>
+      <div class="status-elapsed" id="status-elapsed">0s</div>
+    </div>
+    <div class="status-sub">約需 1–2 分鐘（含雙側 Claude 呼叫 + RAG Triad 評分）</div>
+    <div class="bar"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="grid hidden" id="grid">
+    <section class="col naive"   id="naive-col"></section>
+    <section class="col agentic" id="agentic-col"></section>
+  </div>
+
+</div><!-- .wrap -->
+
+<div class="wrap" style="padding-top:0">
+  <footer>
+    HopRAG · 一般 RAG vs. Agentic 多跳推理 ·
+    RAG Triad 評分：檢索相關性、忠實度、回答相關性 ·
+    同一份向量索引，差的只是編排方式
+  </footer>
+</div>
+
+<script>
+/* ── Utilities ── */
+const $ = s => document.querySelector(s);
+function esc(s) {
+  return (s || "").replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* Auto-grow textarea */
+const qEl = $('#q');
+qEl.addEventListener('input', () => {
+  qEl.style.height = 'auto';
+  qEl.style.height = qEl.scrollHeight + 'px';
+});
+
+/* ── Corpus info ── */
+async function loadInfo() {
+  try {
+    const res = await fetch('/api/info');
+    if (!res.ok) return;
+    const data = await res.json();
+    const n = data.n_chunks || 0;
+    const src = data.sources || [];
+    $('#corpus-label').textContent =
+      `${src.length} 份文件 · ${n.toLocaleString('zh-Hant')} 段`;
+    if (src.length) {
+      const list = $('#source-list');
+      src.forEach(s => {
+        const el = document.createElement('span');
+        el.className = 'source-pill';
+        el.textContent = s;
+        list.appendChild(el);
+      });
+      $('#source-list-wrap').style.display = '';
+    }
+  } catch (_) {
+    $('#corpus-label').textContent = '（後端未連線）';
+  }
+}
+loadInfo();
+
+/* ── Loading step labels ── */
+const STEPS = [
+  '拆解問題中…',
+  '檢索文件中…',
+  '多跳推理中…',
+  '交叉比對來源…',
+  '評分中…',
+  '整合答案中…',
+];
+let stepIdx = 0, stepTimer = null, elapsedTimer = null, startTime = 0;
+
+function startStatus() {
+  stepIdx = 0;
+  $('#status-step').textContent = STEPS[0];
+  $('#status-elapsed').textContent = '0s';
+  clearInterval(stepTimer);
+  clearInterval(elapsedTimer);
+  startTime = Date.now();
+  stepTimer = setInterval(() => {
+    stepIdx = (stepIdx + 1) % STEPS.length;
+    $('#status-step').textContent = STEPS[stepIdx];
+  }, 5000);
+  elapsedTimer = setInterval(() => {
+    const s = ((Date.now() - startTime) / 1000).toFixed(0);
+    $('#status-elapsed').textContent = s + 's';
+  }, 500);
+  $('#status').classList.add('on');
+  $('#grid').classList.add('hidden');
+}
+
+function stopStatus() {
+  clearInterval(stepTimer);
+  clearInterval(elapsedTimer);
+  $('#status').classList.remove('on');
+}
+
+/* ── Score bars ── */
+function scoreFill(pct) {
+  // Color hint: ≥80 good, 60–79 warn, <60 bad — but we don't override the brand colour,
+  // instead we just tweak glow opacity so brand palette stays consistent.
+  return Math.max(0, Math.min(100, pct || 0));
+}
+
+function renderScores(scores, side) {
+  if (!scores) return '';
+  const bars = [
+    { key: 'context_relevance', label: '檢索相關性' },
+    { key: 'groundedness',      label: '忠實度' },
+    { key: 'answer_relevance',  label: '回答相關性' },
+  ];
+  const rowsHTML = bars.map(({ key, label }) => {
+    const val = scoreFill(scores[key] || 0);
+    return `
+      <div class="score-row">
+        <div class="score-label">${esc(label)}</div>
+        <div class="score-track">
+          <div class="score-fill" data-target="${val}" style="width:0%"></div>
+        </div>
+        <div class="score-num">${val}</div>
+      </div>`;
+  }).join('');
+
+  const overall = (scores.overall || 0).toFixed(1);
+  const rationale = scores.rationale ? `<div class="rationale">${esc(scores.rationale)}</div>` : '';
+
+  return `
+    <div class="scores-section">
+      <div class="scores-title">品質評分</div>
+      ${rowsHTML}
+      <div class="overall-row">
+        <div class="overall-label">綜合評分</div>
+        <div class="overall-badge">${overall}</div>
+      </div>
+      ${rationale}
+    </div>`;
+}
+
+/* Animate bars to their target width after insertion */
+function animateBars(container) {
+  container.querySelectorAll('.score-fill[data-target]').forEach(el => {
+    const target = el.getAttribute('data-target');
+    // Delay so the col-rise animation has started first
+    setTimeout(() => { el.style.width = target + '%'; }, 180);
+  });
+}
+
+/* ── Cited chips ── */
+function renderCited(cited) {
+  if (!cited || !cited.length) return '';
+  const chips = cited.map(c =>
+    `<span class="cited-chip" title="${esc(c.text || '')}">${esc(c.title || c.id)}</span>`
+  ).join('');
+  return `<div class="sub">引用來源</div><div class="cited-list">${chips}</div>`;
+}
+
+/* ── Naive column ── */
+function renderNaive(data) {
+  const r = data.naive;
+  const col = $('#naive-col');
+  col.innerHTML = `
+    <div class="col-tag">
+      <span>一般 RAG · 單次檢索</span>
+      <span class="stats">作答 ${r.elapsed_sec}s · ${r.n_claude_calls} 次呼叫</span>
+    </div>
+    <div class="answer">${esc(r.answer || '（無答案）')}</div>
+    ${renderScores(r.scores, 'naive')}
+    ${renderCited(r.cited)}
+  `;
+}
+
+/* ── Agentic column ── */
+function renderAgentic(data) {
+  const r = data.agentic;
+  const hopsHTML = (r.trace || []).map((hop, i) => {
+    const srcChips = (hop.retrieved || []).map(s =>
+      `<span class="hop-src" title="${esc(s.text || '')}">${esc(s.title || s.id)}</span>`
+    ).join('');
+    const badge = hop.sufficient
+      ? '<span class="badge suff">足夠 → 作答</span>'
+      : '<span class="badge cont">不足 → 再檢索</span>';
+    return `
+      <div class="hop" data-i="${i}">
+        <div class="hop-node">${i + 1}</div>
+        <div class="hop-query"><em>子問題 ›</em>${esc(hop.query)}</div>
+        ${srcChips ? `<div class="hop-sources">${srcChips}</div>` : ''}
+        <div class="hop-reasoning">${esc(hop.reasoning || '')}</div>
+        ${badge}
+      </div>`;
+  }).join('');
+
+  const col = $('#agentic-col');
+  col.innerHTML = `
+    <div class="col-tag">
+      <span>Agentic RAG · 多跳推理</span>
+      <span class="stats">作答 ${r.elapsed_sec}s · ${r.n_claude_calls} 次呼叫 · ${r.n_retrievals} 跳</span>
+    </div>
+    <div class="answer">${esc(r.answer || '（無答案）')}</div>
+    ${renderScores(r.scores, 'agentic')}
+    ${renderCited(r.cited)}
+    <div class="sub">多跳推理過程</div>
+    <div class="rail">${hopsHTML}</div>
+  `;
+
+  /* Staggered hop reveal */
+  col.querySelectorAll('.hop').forEach((el, i) => {
+    setTimeout(() => el.classList.add('in'), 280 + i * 400);
+  });
+}
+
+/* ── Render both columns ── */
+function render(data) {
+  if (data.error) { showError(data.error); return; }
+  stopStatus();
+
+  const grid = $('#grid');
+  const nc = $('#naive-col');
+  const ac = $('#agentic-col');
+
+  nc.classList.remove('show');
+  ac.classList.remove('show');
+  void nc.offsetWidth; void ac.offsetWidth;  // force reflow
+
+  renderNaive(data);
+  renderAgentic(data);
+
+  grid.classList.remove('hidden');
+  nc.classList.add('show');
+  ac.style.animationDelay = '.12s';
+  ac.classList.add('show');
+
+  animateBars(nc);
+  setTimeout(() => animateBars(ac), 120);
+}
+
+function showError(msg) {
+  stopStatus();
+  const grid = $('#grid');
+  $('#naive-col').innerHTML   = `<div class="err">⚠ ${esc(msg)}</div>`;
+  $('#agentic-col').innerHTML = '';
+  grid.classList.remove('hidden');
+  $('#naive-col').classList.add('show');
+}
+
+/* ── Submit ── */
+let busy = false;
+
+async function ask() {
+  const question = qEl.value.trim();
+  if (busy || !question) return;
+
+  busy = true;
+  $('#ask-btn').disabled = true;
+  startStatus();
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, model: $('#model').value }),
+    });
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    showError('請求失敗：' + e.message);
+  }
+
+  busy = false;
+  $('#ask-btn').disabled = false;
+}
+
+$('#ask-btn').addEventListener('click', ask);
+qEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); }
+});
+</script>
+</body>
+</html>
