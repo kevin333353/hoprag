@@ -8,7 +8,7 @@ from hoprag.indexer import build_index, make_bge_embed_fn
 from hoprag.retriever import Retriever
 from hoprag.dataset import load_hotpotqa, pool_chunks, examples_from_records
 from hoprag.eval_harness import evaluate
-from hoprag.report import markdown_table, cost_curve_png
+from hoprag.report import markdown_table, cost_curve_png, traces_markdown
 
 
 def build_variants(retriever, claude):
@@ -43,6 +43,8 @@ def run(n, db_path, out_dir):
     with open(os.path.join(out_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(md)
     cost_curve_png(reports, os.path.join(out_dir, "cost_curve.png"))
+    with open(os.path.join(out_dir, "traces.md"), "w", encoding="utf-8") as f:
+        f.write(traces_markdown(reports["agentic_full"]))
     with open(os.path.join(out_dir, "reports.json"), "w", encoding="utf-8") as f:
         json.dump(reports, f, indent=2)
     print("\n" + md)
@@ -78,6 +80,13 @@ def smoke():
     res = rag.answer("where was Tim Burton born?")
     assert res.answer == "Burbank"
     print("smoke OK:", res.answer, "calls:", res.n_claude_calls)
+
+    naive = NaiveRAG(_FakeRetriever(c), _FakeClaude([
+        {"answer": "Burbank", "cited_chunk_ids": ["c1"]},
+    ]))
+    nres = naive.answer("where was Tim Burton born?")
+    assert nres.answer == "Burbank"
+    print("smoke OK (naive):", nres.answer, "calls:", nres.n_claude_calls)
 
 
 if __name__ == "__main__":

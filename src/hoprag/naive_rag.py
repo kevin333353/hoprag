@@ -1,5 +1,5 @@
 from hoprag import prompts
-from hoprag.types import Result
+from hoprag.types import HopStep, Result
 
 
 class NaiveRAG:
@@ -17,6 +17,12 @@ class NaiveRAG:
             question=question,
             answer=synth["answer"],
             cited_chunk_ids=synth["cited_chunk_ids"],
+            trace=[HopStep(
+                query=question,
+                retrieved_ids=[c.id for c in chunks],
+                reasoning="naive single-shot retrieval",
+                sufficient=True,
+            )],
             n_claude_calls=1,
             n_retrievals=1,
         )

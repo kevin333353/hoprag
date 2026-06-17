@@ -7,6 +7,17 @@ from jsonschema import validate, ValidationError
 _TEXT_FIELD = "result"  # confirmed in Task 4 Step 0
 
 
+def _strip_fence(text: str) -> str:
+    t = text.strip()
+    if t.startswith("```"):
+        t = t[3:]
+        if t[:4].lower() == "json":
+            t = t[4:]
+        if t.endswith("```"):
+            t = t[:-3]
+    return t.strip()
+
+
 class ClaudeError(Exception):
     pass
 
@@ -48,7 +59,7 @@ class ClaudeClient:
         for _ in range(max_retries):
             text = self._extract_text(self._run_raw(prompt + reminder))
             try:
-                data = json.loads(text.strip().strip("`"))
+                data = json.loads(_strip_fence(text))
                 validate(instance=data, schema=schema)
                 return data
             except (json.JSONDecodeError, ValidationError) as e:

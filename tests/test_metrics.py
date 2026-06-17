@@ -23,3 +23,10 @@ def test_support_recall():
     assert support_recall(["A", "B", "X"], ["A", "B"]) == 1.0
     assert support_recall(["A"], ["A", "B"]) == 0.5
     assert support_recall(["A"], []) == 1.0
+
+
+def test_support_precision():
+    from hoprag.metrics import support_precision
+    assert support_precision(["A", "B"], ["A", "B", "C"]) == 1.0
+    assert support_precision(["A", "X"], ["A", "B"]) == 0.5
+    assert support_precision([], ["A"]) == 1.0

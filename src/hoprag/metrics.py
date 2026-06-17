@@ -35,3 +35,11 @@ def support_recall(pred_titles: list[str], gold_titles: list[str]) -> float:
     if not gold:
         return 1.0
     return len(set(pred_titles) & gold) / len(gold)
+
+
+def support_precision(pred_titles: list[str], gold_titles: list[str]) -> float:
+    pred = set(pred_titles)
+    if not pred:
+        return 1.0
+    gold = set(gold_titles)
+    return len(pred & gold) / len(pred)

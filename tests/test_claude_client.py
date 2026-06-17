@@ -44,3 +44,9 @@ def test_complete_json_raises_after_retries():
     c = StubClient([_wire("nope"), _wire("still nope")])
     with pytest.raises(ClaudeError):
         c.complete_json("q", SCHEMA, max_retries=2)
+
+
+def test_complete_json_handles_code_fence():
+    fenced = "```json\n{\"answer\": \"7\"}\n```"
+    c = StubClient([_wire(fenced)])
+    assert c.complete_json("q", SCHEMA) == {"answer": "7"}

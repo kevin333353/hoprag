@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 
 def markdown_table(reports: dict) -> str:
-    cols = ["em", "f1", "support_recall", "avg_claude_calls"]
+    cols = ["em", "f1", "support_recall", "support_precision",
+            "avg_claude_calls", "avg_retrievals"]
     lines = ["| variant | " + " | ".join(cols) + " |",
              "|" + "---|" * (len(cols) + 1)]
     for name, r in reports.items():
@@ -26,3 +27,19 @@ def cost_curve_png(reports: dict, out_path: str) -> None:
     ax.set_title("Accuracy vs cost")
     fig.savefig(out_path, bbox_inches="tight")
     plt.close(fig)
+
+
+def traces_markdown(report: dict, k: int = 3) -> str:
+    """Render up to k per-question hop traces as markdown (a qualitative demo artifact)."""
+    lines = []
+    for pq in report.get("per_question", [])[:k]:
+        lines.append(f"### {pq['qid']} — answer: {pq.get('answer', '')!r}")
+        for i, step in enumerate(pq.get("trace", [])):
+            lines.append(
+                f"- hop {i}: query={step['query']!r} "
+                f"sufficient={step['sufficient']} retrieved={step['retrieved_ids']}"
+            )
+            if step.get("reasoning"):
+                lines.append(f"    - reasoning: {step['reasoning']}")
+        lines.append("")
+    return "\n".join(lines)
