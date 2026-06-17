@@ -50,6 +50,21 @@ python -m venv .venv
 
 (On macOS/Linux use `.venv/bin/python`.)
 
+## Interactive demo
+
+A web UI that runs a question through **naive vs agentic side by side** and visualizes the
+agentic multi-hop trace — each hop's query, the documents it retrieved, its reasoning, and the
+sufficiency check — revealed step by step.
+
+```bash
+.venv/Scripts/python scripts/demo_server.py      # http://127.0.0.1:5000
+```
+
+It indexes a small bundled corpus (`hoprag.demo_corpus`) so it starts instantly — no HotpotQA
+download. The example questions are precomputed (`scripts/precompute_examples.py` →
+`demo/examples_cache.json`) and replay instantly; custom questions run live through the `claude`
+CLI (~4–8 calls, ~1 min). Default model is `haiku` to keep cost low.
+
 ## Run
 
 Wiring smoke test — no network, no Claude CLI:
@@ -68,7 +83,7 @@ Full eval — needs internet for HotpotQA + the BGE model on first run, **and an
 
 This evaluates five variants — `naive`, `agentic_full`, and three ablations (`ablation_no_decompose`, `ablation_fixed_hops`, `ablation_no_verify`) — on a pooled HotpotQA corpus, against the same fixed retriever, and writes `results.md`, `cost_curve.png`, and `reports.json` to the output dir.
 
-> The LLM is the `claude` CLI (`claude -p --output-format json`); it must be installed and authenticated with a working API key. Embeddings are local (`BAAI/bge-small-en-v1.5`), so only generation needs the CLI. Each agentic question makes ~4–8 Claude calls, so start with a small `--n`.
+> The LLM is the `claude` CLI (`claude -p --output-format json`); it must be installed and signed in. It authenticates via your Claude Code login — no API key needed (a stray/invalid `ANTHROPIC_API_KEY` in the environment is dropped automatically, since it would otherwise 401). Embeddings are local (`BAAI/bge-small-en-v1.5`), so only generation needs the CLI. Each agentic question makes ~4–8 Claude calls, so start with a small `--n`.
 
 ## Metrics
 
