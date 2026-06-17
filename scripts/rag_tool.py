@@ -2,8 +2,10 @@
 
     python scripts/rag_tool.py --docs AI-test            # http://127.0.0.1:5000
 
-Builds a bge-m3 LanceDB index over every PDF in --docs (downloads bge-m3 on first run,
-~2GB), then serves the UI + /api/ask. The LLM is the authenticated `claude` CLI.
+Builds a Chinese-embedding LanceDB index over every PDF in --docs, then serves the UI +
+/api/ask. Default embedder is bge-small-zh (~100MB); pass --embed-model BAAI/bge-m3 for
+stronger multilingual retrieval if the machine has the RAM (bge-m3 is ~2GB and can OOM on
+small machines). The LLM is the authenticated `claude` CLI.
 """
 
 import argparse
@@ -21,13 +23,15 @@ def main():
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=5000)
     ap.add_argument("--db", default=".lancedb/rag")
-    ap.add_argument("--model", default="haiku")
+    ap.add_argument("--model", default="haiku", help="claude model for answering/scoring")
+    ap.add_argument("--embed-model", default="BAAI/bge-small-zh-v1.5",
+                    help="embedding model (bge-m3 is stronger but needs ~3GB RAM)")
     args = ap.parse_args()
 
     print(f"Reading PDFs from {args.docs} ...")
     chunks = load_pdf_chunks(args.docs)
-    print(f"  {len(chunks)} chunks. Embedding with bge-m3 (downloads ~2GB on first run)...")
-    embed_fn = make_bge_embed_fn(model_name="BAAI/bge-m3")
+    print(f"  {len(chunks)} chunks. Embedding with {args.embed_model} (downloads on first run)...")
+    embed_fn = make_bge_embed_fn(model_name=args.embed_model)
     table = build_index(chunks, embed_fn=embed_fn, db_path=args.db)
     retriever = Retriever(table, embed_fn=embed_fn)
     id2chunk = {c.id: c for c in chunks}

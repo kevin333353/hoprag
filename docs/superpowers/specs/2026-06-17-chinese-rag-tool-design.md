@@ -24,7 +24,7 @@
 | 語言 | 介面與作答全繁體中文 | 使用者語料是繁中 PDF |
 | 語料 | 使用者自己的 PDF(`AI-test/`,iPAS 教材) | 使用者明確要求用自己的文件 |
 | 模式 | **即時**提問(非預先跑好的 static) | 使用者要看真實、即時的差異 |
-| Embedding | **`BAAI/bge-m3`**(多語、強) | 中文檢索品質;離線;一次性建索引可接受其較重的成本 |
+| Embedding | 預設 **`BAAI/bge-small-zh-v1.5`**(輕、~100MB);`bge-m3` 可用 `--embed-model` 選用 | 原訂 bge-m3,但在測試機上 ~2GB 模型 **OOM**(記憶體不足);改以輕量中文模型為預設,bge-m3 留作高 RAM 機器的選項 |
 | 評分 | **RAG Triad**(reference-free,LLM-as-judge) | 查證後確認為業界標準(TruLens / RAGAS);使用者問題無標準答案,不能用 EM/F1 |
 | 對照 | 保留 naive vs agentic **並排** | 分數差就是使用者要看的「具體差異」 |
 | LLM | Claude CLI(沿用 v1 的 `ClaudeClient`,登入態、無金鑰) | 一致 |
@@ -43,7 +43,7 @@
 | `scripts/rag_tool.py` | 載入 `AI-test/` PDF → bge-m3 建索引 → 起伺服器 | CLI runner |
 | `demo/rag.html` | 繁中前端:提問框、並排兩欄、三條分數、時間、來源、多跳 trace | 單一靜態頁,fetch `/api/ask` |
 
-**Embedding 取得**:沿用 `indexer.make_bge_embed_fn(model_name="BAAI/bge-m3")`。
+**Embedding 取得**:`indexer.make_bge_embed_fn(model_name=...)`,預設 `BAAI/bge-small-zh-v1.5`;`make_bge_embed_fn` 內以 `truststore` 用 OS 憑證庫,讓模型下載能穿過公司 TLS 代理。
 
 ## 4. 評分定義(RAG Triad)
 
