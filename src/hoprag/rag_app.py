@@ -19,9 +19,12 @@ from hoprag.rag_eval import score_triad
 
 _FRONTEND_DIR = Path(__file__).resolve().parents[2] / "demo"
 TOP_K = 4
-# cap the judge prompt size: at most MAX_JUDGE_CONTEXTS retrieved chunks, each truncated to _CTX_CHARS chars
+# cap the judge prompt size: at most MAX_JUDGE_CONTEXTS retrieved chunks, each truncated
+# to _CTX_CHARS chars. Keep _CTX_CHARS >= the chunk window size (~500) so grounding
+# evidence deeper in a chunk isn't hidden from the judge (which would unfairly tank the
+# groundedness score).
 MAX_JUDGE_CONTEXTS = 6
-_CTX_CHARS = 320
+_CTX_CHARS = 1000
 
 
 def _src(cid: str, id2chunk: dict) -> dict:
