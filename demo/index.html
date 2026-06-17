@@ -41,7 +41,7 @@
     border-bottom:1px solid var(--line2);padding-bottom:22px;margin-bottom:30px}
   .brand h1{font-family:var(--font-display);font-weight:800;font-size:clamp(34px,5vw,58px);
     letter-spacing:-.02em;margin:0;line-height:.95}
-  .brand h1 .hop{color:var(--amber);font-style:italic}
+  .brand h1 .rag{color:var(--amber);font-style:italic}
   .brand p{margin:.5em 0 0;color:var(--muted);max-width:46ch;font-size:14.5px}
   .engine{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);text-align:right;
     white-space:nowrap;line-height:1.9}
@@ -151,7 +151,7 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <h1>Hop<span class="hop">RAG</span></h1>
+      <h1>Hop<span class="rag">RAG</span></h1>
       <p>Agentic multi-hop retrieval. Watch a hand-written orchestration loop decompose a
          question, hop across documents, and ground its answer — beside a naive single-shot baseline.</p>
     </div>
@@ -305,8 +305,12 @@ $("#ask").addEventListener("click", ()=> ask($("#q").value));
 $("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") ask($("#q").value); });
 
 async function init(){
+  let data;
   try{
-    const data = await (await fetch("/api/examples")).json();
+    // embedded mode (window.__EXAMPLES__) lets the cached demo run with no backend
+    data = window.__EXAMPLES__ || await (await fetch("/api/examples")).json();
+  }catch(e){ return; }
+  {
     const chips = $("#chips");
     (data.examples||[]).forEach(ex=>{
       const cached = data.cached && ex.naive;
@@ -317,7 +321,13 @@ async function init(){
       el.addEventListener("click", ()=>{ $("#q").value = ex.question; ask(ex.question); });
       chips.appendChild(el);
     });
-  }catch(e){ /* examples optional */ }
+    // shareable deep-link: #ex=N auto-loads an example (instant if cached)
+    const m = location.hash.match(/ex=(\d+)/);
+    if(m){
+      const ex = (data.examples||[])[+m[1]];
+      if(ex){ $("#q").value = ex.question; ex.naive ? render(ex) : ask(ex.question); }
+    }
+  }
 }
 init();
 </script>
