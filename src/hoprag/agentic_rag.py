@@ -13,6 +13,12 @@ class AgenticConfig:
     fixed_hops: int = 2          # used when sufficiency_check is False
     top_k: int = 5
 
+    def __post_init__(self):
+        if self.fixed_hops > self.max_hops:
+            raise ValueError(
+                f"fixed_hops ({self.fixed_hops}) must be <= max_hops ({self.max_hops})"
+            )
+
 
 def _dedup(chunks):
     seen, out = set(), []
@@ -51,15 +57,16 @@ class AgenticRAG:
             step = self.claude.complete_json(
                 prompts.hop_prompt(question, gathered), prompts.HOP_SCHEMA)
             res.n_claude_calls += 1
+            sufficient = bool(step["sufficient"])
             res.trace.append(HopStep(
                 query=current_query,
                 retrieved_ids=[c.id for c in chunks],
                 reasoning=step["reasoning"],
-                sufficient=bool(step["sufficient"]),
+                sufficient=sufficient,
             ))
 
             if cfg.sufficiency_check:
-                done = step["sufficient"]
+                done = sufficient
             else:
                 done = (hop + 1) >= cfg.fixed_hops
             if done:

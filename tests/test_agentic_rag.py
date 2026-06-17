@@ -84,3 +84,9 @@ def test_max_hops_caps_loop():
                      AgenticConfig(max_hops=3, verify_citations=False))
     res = rag.answer("q")
     assert res.n_retrievals == 3
+
+
+def test_config_rejects_fixed_hops_above_max_hops():
+    import pytest
+    with pytest.raises(ValueError):
+        AgenticConfig(fixed_hops=10, max_hops=5)
