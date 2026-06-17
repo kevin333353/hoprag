@@ -8,3 +8,4 @@ reports/
 .claude/
 *.egg-info/
 AI-test/
+demo/rag_static.html
