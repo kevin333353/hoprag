@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from hoprag import prompts
+from hoprag import prompts as _default_prompts
 from hoprag.types import HopStep, Result
 
 
@@ -30,10 +30,11 @@ def _dedup(chunks):
 
 
 class AgenticRAG:
-    def __init__(self, retriever, claude, config: AgenticConfig | None = None):
+    def __init__(self, retriever, claude, config: AgenticConfig | None = None, prompts_mod=None):
         self.retriever = retriever
         self.claude = claude
         self.config = config or AgenticConfig()
+        self.prompts = prompts_mod or _default_prompts  # inject prompts_zh for Chinese
 
     def answer(self, question: str) -> Result:
         cfg = self.config
@@ -42,7 +43,7 @@ class AgenticRAG:
         # (1) decompose / plan
         if cfg.decompose:
             plan = self.claude.complete_json(
-                prompts.decompose_prompt(question), prompts.DECOMPOSE_SCHEMA)
+                self.prompts.decompose_prompt(question), self.prompts.DECOMPOSE_SCHEMA)
             res.n_claude_calls += 1
             current_query = plan["first_query"]
         else:
@@ -55,7 +56,7 @@ class AgenticRAG:
             gathered = _dedup(gathered + chunks)
 
             step = self.claude.complete_json(
-                prompts.hop_prompt(question, gathered), prompts.HOP_SCHEMA)
+                self.prompts.hop_prompt(question, gathered), self.prompts.HOP_SCHEMA)
             res.n_claude_calls += 1
             sufficient = bool(step["sufficient"])
             res.trace.append(HopStep(
@@ -75,7 +76,7 @@ class AgenticRAG:
 
         # (4) synthesize with citations
         synth = self.claude.complete_json(
-            prompts.synthesize_prompt(question, gathered), prompts.SYNTH_SCHEMA)
+            self.prompts.synthesize_prompt(question, gathered), self.prompts.SYNTH_SCHEMA)
         res.n_claude_calls += 1
         res.answer = synth["answer"]
         res.cited_chunk_ids = synth.get("cited_chunk_ids") or []
@@ -83,8 +84,8 @@ class AgenticRAG:
         # (5) verify citations
         if cfg.verify_citations:
             ver = self.claude.complete_json(
-                prompts.verify_prompt(question, res.answer, gathered),
-                prompts.VERIFY_SCHEMA)
+                self.prompts.verify_prompt(question, res.answer, gathered),
+                self.prompts.VERIFY_SCHEMA)
             res.n_claude_calls += 1
             if not ver["supported"]:
                 res.answer = ver.get("revised_answer") or res.answer

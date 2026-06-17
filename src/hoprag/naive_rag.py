@@ -1,17 +1,18 @@
-from hoprag import prompts
+from hoprag import prompts as _default_prompts
 from hoprag.types import HopStep, Result
 
 
 class NaiveRAG:
-    def __init__(self, retriever, claude, top_k: int = 5):
+    def __init__(self, retriever, claude, top_k: int = 5, prompts_mod=None):
         self.retriever = retriever
         self.claude = claude
         self.top_k = top_k
+        self.prompts = prompts_mod or _default_prompts  # inject prompts_zh for Chinese
 
     def answer(self, question: str) -> Result:
         chunks = self.retriever.search(question, self.top_k)
         synth = self.claude.complete_json(
-            prompts.synthesize_prompt(question, chunks), prompts.SYNTH_SCHEMA
+            self.prompts.synthesize_prompt(question, chunks), self.prompts.SYNTH_SCHEMA
         )
         return Result(
             question=question,
