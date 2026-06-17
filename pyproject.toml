@@ -1,0 +1,24 @@
+[project]
+name = "hoprag"
+version = "0.1.0"
+description = "Agentic multi-hop RAG vs naive RAG on HotpotQA"
+requires-python = ">=3.10"
+dependencies = [
+    "sentence-transformers>=2.6",
+    "lancedb>=0.6",
+    "datasets>=2.18",
+    "jsonschema>=4.0",
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
