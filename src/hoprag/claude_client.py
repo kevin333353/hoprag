@@ -1,10 +1,20 @@
 import json
+import os
 import subprocess
 import time
 
 from jsonschema import validate, ValidationError
 
 _TEXT_FIELD = "result"  # confirmed in Task 4 Step 0
+
+# The Claude Code CLI authenticates via the logged-in session. A stray/invalid
+# ANTHROPIC_API_KEY (or AUTH_TOKEN) in the environment overrides that and causes
+# 401s, so we drop these before invoking the CLI subprocess.
+_DROP_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+
+
+def _clean_env() -> dict:
+    return {k: v for k, v in os.environ.items() if k not in _DROP_ENV}
 
 
 def _strip_fence(text: str) -> str:
@@ -36,7 +46,8 @@ class ClaudeClient:
         for attempt in range(3):
             try:
                 proc = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=self.timeout
+                    cmd, capture_output=True, text=True, timeout=self.timeout,
+                    env=_clean_env(), stdin=subprocess.DEVNULL,
                 )
                 if proc.returncode == 0:
                     return proc.stdout
@@ -48,6 +59,8 @@ class ClaudeClient:
 
     def _extract_text(self, raw: str) -> str:
         obj = json.loads(raw)
+        if obj.get("is_error"):
+            raise ClaudeError(f"claude CLI returned an error: {obj.get(_TEXT_FIELD)}")
         return obj[_TEXT_FIELD]
 
     def complete(self, prompt: str) -> str:

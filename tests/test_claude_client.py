@@ -50,3 +50,19 @@ def test_complete_json_handles_code_fence():
     fenced = "```json\n{\"answer\": \"7\"}\n```"
     c = StubClient([_wire(fenced)])
     assert c.complete_json("q", SCHEMA) == {"answer": "7"}
+
+
+def test_clean_env_drops_api_key(monkeypatch):
+    from hoprag.claude_client import _clean_env
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "bad-key")
+    monkeypatch.setenv("PATH", "keep-me")
+    env = _clean_env()
+    assert "ANTHROPIC_API_KEY" not in env
+    assert env.get("PATH") == "keep-me"
+
+
+def test_extract_text_raises_on_api_error():
+    # the CLI exits 0 even on a 401, signalling failure via is_error in the JSON
+    c = StubClient([json.dumps({"is_error": True, "result": "Invalid API key"})])
+    with pytest.raises(ClaudeError):
+        c.complete("hi")
