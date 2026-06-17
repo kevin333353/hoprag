@@ -28,3 +28,13 @@ def test_triad_schema_required():
 def test_triad_prompt_handles_no_context():
     p = triad_prompt("Q", "A", [])
     assert "沒有檢索到任何內容" in p
+
+
+def test_score_triad_clamps_out_of_range():
+    j = FakeJudge({"context_relevance": 150, "groundedness": -5,
+                   "answer_relevance": 200, "rationale": None})
+    s = score_triad(j, "Q", "A", ["c"])
+    assert s["context_relevance"] == 100.0
+    assert s["groundedness"] == 0.0
+    assert s["answer_relevance"] == 100.0
+    assert s["overall"] == round((100 + 0 + 100) / 3, 1)  # 66.7

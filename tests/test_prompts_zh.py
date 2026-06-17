@@ -19,3 +19,17 @@ def test_pipeline_uses_injected_chinese_prompts():
     claude = FakeClaude(json_responses=[{"answer": "答案", "cited_chunk_ids": ["c1"]}])
     NaiveRAG(retr, claude, prompts_mod=prompts_zh).answer("q")
     assert "繁體中文" in claude.prompts[0]  # the injected zh synthesize prompt was used
+
+
+def test_agentic_pipeline_uses_injected_chinese_prompts():
+    from conftest import FakeRetriever, FakeClaude
+    from hoprag.agentic_rag import AgenticRAG, AgenticConfig
+    retr = FakeRetriever({"q": [Chunk(id="c1", title="t", text="x")]})
+    claude = FakeClaude(json_responses=[
+        {"first_query": "q", "subquestions": []},
+        {"reasoning": "足夠", "sufficient": True, "next_query": None},
+        {"answer": "答案", "cited_chunk_ids": ["c1"]},
+        {"supported": True, "revised_answer": "答案", "cited_chunk_ids": ["c1"]},
+    ])
+    AgenticRAG(retr, claude, AgenticConfig(), prompts_mod=prompts_zh).answer("q")
+    assert any("多跳檢索" in p for p in claude.prompts)  # zh decompose prompt was used

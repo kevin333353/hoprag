@@ -33,10 +33,22 @@ def triad_prompt(question: str, answer: str, contexts: list[str]) -> str:
     )
 
 
+def _clamp(x) -> float:
+    try:
+        return max(0.0, min(100.0, float(x)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def score_triad(claude, question: str, answer: str, contexts: list[str]) -> dict:
-    """Returns {context_relevance, groundedness, answer_relevance, rationale, overall}."""
+    """Returns {context_relevance, groundedness, answer_relevance, rationale, overall}.
+    Scores are clamped to [0, 100]; a fresh dict is returned (judge output not mutated)."""
     s = claude.complete_json(triad_prompt(question, answer, contexts), TRIAD_SCHEMA)
-    s["overall"] = round(
-        (s["context_relevance"] + s["groundedness"] + s["answer_relevance"]) / 3, 1
-    )
-    return s
+    cr, g, ar = _clamp(s["context_relevance"]), _clamp(s["groundedness"]), _clamp(s["answer_relevance"])
+    return {
+        "context_relevance": cr,
+        "groundedness": g,
+        "answer_relevance": ar,
+        "rationale": s.get("rationale"),
+        "overall": round((cr + g + ar) / 3, 1),
+    }

@@ -25,3 +25,9 @@ def test_chunk_pages_titles_ids_source():
     assert any(c.title == "doc1 p.2" for c in cs)
     assert all(c.source_qid == "doc1" for c in cs)
     assert len({c.id for c in cs}) == len(cs)  # ids unique
+
+
+def test_window_text_overlap_content():
+    w = window_text("0123456789" * 100, size=400, overlap=100)  # 1000 chars
+    assert len(w) >= 2
+    assert w[0][-100:] == w[1][:100]  # the overlap region is shared verbatim
