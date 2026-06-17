@@ -48,6 +48,9 @@ class ClaudeClient:
                 proc = subprocess.run(
                     cmd, capture_output=True, text=True, timeout=self.timeout,
                     env=_clean_env(), stdin=subprocess.DEVNULL,
+                    # the CLI emits UTF-8; force it (Windows would otherwise use the
+                    # locale codec, e.g. cp950, and choke on em-dashes / curly quotes)
+                    encoding="utf-8", errors="replace",
                 )
                 if proc.returncode == 0:
                     return proc.stdout

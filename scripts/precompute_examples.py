@@ -37,11 +37,15 @@ def main():
     examples = []
     for i, ex in enumerate(EXAMPLE_QUESTIONS, 1):
         print(f"[{i}/{len(EXAMPLE_QUESTIONS)}] {ex['question']}")
-        payload = run_question(retriever, claude, ex["question"], id2chunk)
-        payload["answer"] = ex["answer"]  # gold answer for correctness display
-        print(f"    naive={payload['naive']['answer']!r}  "
-              f"agentic={payload['agentic']['answer']!r}  "
-              f"hops={len(payload['agentic']['trace'])}")
+        try:
+            payload = run_question(retriever, claude, ex["question"], id2chunk)
+            payload["answer"] = ex["answer"]  # gold answer for correctness display
+            print(f"    naive={payload['naive']['answer']!r}  "
+                  f"agentic={payload['agentic']['answer']!r}  "
+                  f"hops={len(payload['agentic']['trace'])}")
+        except Exception as e:  # one bad question shouldn't lose the rest
+            print(f"    FAILED: {type(e).__name__}: {e}")
+            payload = {"question": ex["question"], "answer": ex["answer"]}  # chip runs live
         examples.append(payload)
 
     _OUT.parent.mkdir(parents=True, exist_ok=True)
