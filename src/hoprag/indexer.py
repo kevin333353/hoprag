@@ -16,6 +16,14 @@ def build_index(chunks, embed_fn, db_path: str, table_name: str = "chunks"):
 
 
 def make_bge_embed_fn(model_name: str = "BAAI/bge-small-en-v1.5"):
+    # Use the OS (Windows) trust store so model downloads work behind a corporate
+    # TLS-inspecting proxy (self-signed CA in the chain). Harmless elsewhere.
+    try:
+        import truststore
+        truststore.inject_into_ssl()
+    except Exception:
+        pass
+
     from sentence_transformers import SentenceTransformer
 
     model = SentenceTransformer(model_name)
