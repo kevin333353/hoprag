@@ -25,7 +25,7 @@ def main():
     ap.add_argument("--db", default=".lancedb/rag")
     ap.add_argument("--model", default="haiku", help="claude model for answering/scoring")
     ap.add_argument("--embed-model", default="BAAI/bge-small-zh-v1.5",
-                    help="embedding model (bge-m3 is stronger but needs ~3GB RAM)")
+                    help="embedding model (bge-m3 is stronger but ~2GB and can OOM on small machines)")
     args = ap.parse_args()
 
     print(f"Reading PDFs from {args.docs} ...")
